@@ -1,6 +1,7 @@
 import shutil
 import io
 import os
+import csv
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 import pandas as pd
@@ -65,6 +66,7 @@ class ListadoContratos(BaseModel):
 # Archivos CSV
 registroDuenos_csv = "registroDuenos.csv"
 registroAnimales_csv = "registroAnimales.csv"
+registroMascotas_csv = "registroMascotas.csv"
 
 @app.get("/retrieve_data/")
 def retrieve_data():
@@ -234,5 +236,25 @@ def eliminar_cita(cita_id: int):
 
 @app.post("/mascotas")
 def registrar_mascota(mascota: Animal):
-    # Aquí puedes agregar la lógica para registrar la mascota en la base de datos
-    return {"message": "Mascota registrada exitosamente"}
+    try:
+        file_exists = os.path.isfile(registroMascotas_csv)
+        with open(registroMascotas_csv, mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=mascota.dict().keys())
+            if not file_exists:
+                writer.writeheader()  # Escribe el encabezado solo si el archivo no existe
+            writer.writerow(mascota.dict())
+        return {"message": "Mascota registrada exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al registrar la mascota: {e}")
+
+@app.get("/mascotas/")
+def get_mascotas():
+    try:
+        if os.path.exists(registroMascotas_csv):
+            registro_df = pd.read_csv(registroMascotas_csv)
+            mascotas = registro_df.to_dict(orient="records")
+            return mascotas
+        else:
+            raise HTTPException(status_code=404, detail="No hay mascotas registradas")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al recuperar las mascotas: {e}")
