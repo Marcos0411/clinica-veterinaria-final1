@@ -38,7 +38,7 @@ def info_box (texto, color=None):
 #matplotlib.use("agg")
 #lock = RendererAgg.lock
 
-df_merged = load_data('http://fastapi:8000/retrieve_data')
+df_merged = load_data('http://localhost:8000/retrieve_data')
 
 
 registros = str(df_merged.shape[0])

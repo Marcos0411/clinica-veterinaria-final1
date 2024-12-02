@@ -1,8 +1,12 @@
-
 import streamlit as st
 import time
 
-st.set_page_config(page_title='Ejemplito básico, de aquí al cielo', layout='wide',     page_icon="📈")
+# Configuración de la página
+st.set_page_config(page_title='Clínica Veterinaria', layout='wide', page_icon="🐾")
+
+# Título de la aplicación
+st.title("🐾 CLÍNICA VETERINARIA CUATRO PATAS 🐾")
+
 st.image('logo.jpg')
 
 placeholder = st.empty()
