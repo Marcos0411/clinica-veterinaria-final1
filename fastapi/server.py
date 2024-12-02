@@ -27,11 +27,11 @@ class Dueno(BaseModel):
     direccion_dueno: str = Field(..., min_length=1, max_length=200)
 
 class Animal(BaseModel):
-    nombre_animal: str = Field(..., min_length=1, max_length=100)
-    chip_animal: str = Field(..., min_length=1, max_length=15)
-    especie_animal: str = Field(..., min_length=1, max_length=50)
-    nacimiento_animal: date
-    sexo: str = Field(..., regex=r'^[MF]$')
+    nombre: str
+    especie: str
+    raza: str
+    edad: int
+    propietario: str
 
 class Cita(BaseModel):
     id: Optional[int]
@@ -232,14 +232,7 @@ def eliminar_cita(cita_id: int):
             return {"detail": "Cita eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-class Mascota(BaseModel):
-    nombre: str
-    especie: str
-    raza: str
-    edad: int
-    propietario: str
-
 @app.post("/mascotas")
-def registrar_mascota(mascota: Mascota):
+def registrar_mascota(mascota: Animal):
     # Aquí puedes agregar la lógica para registrar la mascota en la base de datos
     return {"message": "Mascota registrada exitosamente"}
