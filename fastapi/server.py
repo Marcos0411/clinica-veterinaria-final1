@@ -27,7 +27,7 @@ class Dueno(BaseModel):
     dni_dueno: str = Field(..., min_length=9, max_length=9)
     direccion_dueno: str = Field(..., min_length=1, max_length=200)
 
-class Animal(BaseModel):
+class Mascota(BaseModel):
     nombre: str
     especie: str
     raza: str
@@ -36,7 +36,7 @@ class Animal(BaseModel):
 
 class Cita(BaseModel):
     id: Optional[int]
-    nombre_animal: str
+    nombre_mascota: str
     nombre_dueno: str
     tratamiento: str
     fecha_inicio: datetime
@@ -65,7 +65,6 @@ class ListadoContratos(BaseModel):
 
 # Archivos CSV
 registroDuenos_csv = "registroDuenos.csv"
-registroAnimales_csv = "registroAnimales.csv"
 registroMascotas_csv = "registroMascotas.csv"
 
 @app.get("/retrieve_data/")
@@ -148,62 +147,51 @@ async def buscar_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
-# Endpoints para animales
-@app.get("/animales/")
-def get_animales():
-    if os.path.exists(registroAnimales_csv):
-        registro_df = pd.read_csv(registroAnimales_csv)
-        animales = registro_df.to_dict(orient="records")
-        return animales
-    else:
-        raise HTTPException(status_code=404, detail="No hay animales registrados")
 
-@app.post("/alta_animal/")
-async def alta_animal(data: Animal):
+@app.post("/alta_mascota/")
+async def alta_mascota(data: Mascota):
     try:
-        if os.path.exists(registroAnimales_csv):
-            registro_df = pd.read_csv(registroAnimales_csv)
+        if os.path.exists(registroMascotas_csv):
+            registro_df = pd.read_csv(registroMascotas_csv)
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre_animal", "chip_animal", "especie_animal", "nacimiento_animal",
-                "sexo"
+                "nombre", "especie", "raza", "edad", "propietario"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registroAnimales_csv, index=False)
-        return {"message": "Animal registrado correctamente"}
+        registro_df.to_csv(registroMascotas_csv, index=False)
+        return {"message": "Mascota registrada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
 
-@app.get("/animales/{chip_animal}")
-async def buscar_animal(chip_animal: str):
+@app.get("/mascotas/{nombre}")
+async def buscar_mascota(nombre: str):
     try:
-        if not os.path.exists(registroAnimales_csv):
-            raise HTTPException(status_code=404, detail="Archivo de registros de animales no encontrado.")
-        registro_df = pd.read_csv(registroAnimales_csv)
-        registro_df['chip_animal'] = registro_df['chip_animal'].astype(str)
-        animal = registro_df[registro_df['chip_animal'].str.strip() == chip_animal.strip()]
-        if animal.empty:
-            raise HTTPException(status_code=404, detail="Animal no encontrado.")
-        return animal.to_dict(orient='records')[0]
+        if not os.path.exists(registroMascotas_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de mascotas no encontrado.")
+        registro_df = pd.read_csv(registroMascotas_csv)
+        mascota = registro_df[registro_df['nombre'].str.strip() == nombre.strip()]
+        if mascota.empty:
+            raise HTTPException(status_code=404, detail="Mascota no encontrada.")
+        return mascota.to_dict(orient='records')[0]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar animal: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar mascota: {str(e)}")
 
-@app.delete("/animales/{chip_animal}")
-def eliminar_animal(chip_animal: str):
+@app.delete("/mascotas/{nombre}")
+def eliminar_mascota(nombre: str):
     try:
-        if os.path.exists(registroAnimales_csv):
-            registro_df = pd.read_csv(registroAnimales_csv)
-            registro_df['chip_animal'] = registro_df['chip_animal'].astype(str)
-            if chip_animal.strip() not in registro_df['chip_animal'].values:
-                raise HTTPException(status_code=404, detail="Animal no encontrado")
-            registro_df = registro_df[registro_df['chip_animal'] != chip_animal.strip()]
-            registro_df.to_csv(registroAnimales_csv, index=False)
-            return {"detail": "Animal eliminado exitosamente"}
+        if os.path.exists(registroMascotas_csv):
+            registro_df = pd.read_csv(registroMascotas_csv)
+            registro_df['nombre'] = registro_df['nombre'].astype(str)
+            if nombre.strip() not in registro_df['nombre'].values:
+                raise HTTPException(status_code=404, detail="Mascota no encontrada")
+            registro_df = registro_df[registro_df['nombre'] != nombre.strip()]
+            registro_df.to_csv(registroMascotas_csv, index=False)
+            return {"detail": "Mascota eliminada exitosamente"}
         else:
-            raise HTTPException(status_code=404, detail="No hay animales registrados")
+            raise HTTPException(status_code=404, detail="No hay mascotas registradas")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inesperado al eliminar animal: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error inesperado al eliminar mascota: {str(e)}")
 
 # Endpoints para citas
 citas_db = []
@@ -234,19 +222,7 @@ def eliminar_cita(cita_id: int):
             return {"detail": "Cita eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-@app.post("/mascotas")
-def registrar_mascota(mascota: Animal):
-    try:
-        file_exists = os.path.isfile(registroMascotas_csv)
-        with open(registroMascotas_csv, mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=mascota.dict().keys())
-            if not file_exists:
-                writer.writeheader()  # Escribe el encabezado solo si el archivo no existe
-            writer.writerow(mascota.dict())
-        return {"message": "Mascota registrada exitosamente"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al registrar la mascota: {e}")
-
+# Eliminar la segunda definición duplicada de get_mascotas
 @app.get("/mascotas/")
 def get_mascotas():
     try:
@@ -258,3 +234,19 @@ def get_mascotas():
             raise HTTPException(status_code=404, detail="No hay mascotas registradas")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al recuperar las mascotas: {e}")
+
+@app.post("/mascotas/")
+async def alta_mascota(data: Mascota):
+    try:
+        if os.path.exists(registroMascotas_csv):
+            registro_df = pd.read_csv(registroMascotas_csv)
+        else:
+            registro_df = pd.DataFrame(columns=[
+                "nombre", "especie", "raza", "edad", "propietario"
+            ])
+        nuevo_registro = pd.DataFrame([data.dict()])
+        registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
+        registro_df.to_csv(registroMascotas_csv, index=False)
+        return {"message": "Mascota registrada correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")

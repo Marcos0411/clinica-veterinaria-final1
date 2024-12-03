@@ -21,6 +21,7 @@ def obtener_mascotas():
     if response.status_code == 200:
         return response.json()
     else:
+        st.error(f"Error al obtener las mascotas: {response.status_code} - {response.text}")
         return []
 
 with st.form("registro_mascota"):
@@ -35,12 +36,19 @@ with st.form("registro_mascota"):
         status_code = registrar_mascota(nombre, especie, raza, edad, propietario)
         if status_code == 200:
             st.success("Mascota registrada exitosamente")
+            st.session_state["refresh"] = True
         else:
             st.error("Error al registrar la mascota")
 
 st.header("Mascotas Registradas")
-mascotas = obtener_mascotas()
+if "refresh" in st.session_state and st.session_state["refresh"]:
+    mascotas = obtener_mascotas()
+    st.session_state["refresh"] = False
+else:
+    mascotas = obtener_mascotas()
+
 if mascotas:
-    st.write(mascotas)
+    for mascota in mascotas:
+        st.write(f"Nombre: {mascota['nombre']}, Especie: {mascota['especie']}, Raza: {mascota['raza']}, Edad: {mascota['edad']}, Propietario: {mascota['propietario']}")
 else:
     st.write("No hay mascotas registradas")
