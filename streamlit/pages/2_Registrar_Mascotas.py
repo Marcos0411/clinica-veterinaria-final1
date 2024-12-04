@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 st.title("Registrar Mascotas")
 
@@ -48,7 +49,27 @@ else:
     mascotas = obtener_mascotas()
 
 if mascotas:
-    for mascota in mascotas:
-        st.write(f"Nombre: {mascota['nombre']}, Especie: {mascota['especie']}, Raza: {mascota['raza']}, Edad: {mascota['edad']}, Propietario: {mascota['propietario']}")
+    df_mascotas = pd.DataFrame(mascotas)
+    st.markdown(
+        """
+        <style>
+        .dataframe {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .dataframe th, .dataframe td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .dataframe th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #4CAF50;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    st.dataframe(df_mascotas)
 else:
     st.write("No hay mascotas registradas")

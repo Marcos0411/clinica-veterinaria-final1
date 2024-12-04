@@ -31,7 +31,8 @@ class Mascota(BaseModel):
     nombre: str
     especie: str
     raza: str
-    edad: int
+    fecha_nacimiento: date
+    patologias_previas: Optional[str] = None
     propietario: str
 
 class Cita(BaseModel):
@@ -67,6 +68,7 @@ class ListadoContratos(BaseModel):
 registroDuenos_csv = "registroDuenos.csv"
 registroMascotas_csv = "registroMascotas.csv"
 
+# Retrieve data
 @app.get("/retrieve_data/")
 def retrieve_data():
     try:
@@ -84,11 +86,12 @@ class FormData(BaseModel):
     option: str
     amount: float
 
+# Submit form
 @app.post("/envio/")
 async def submit_form(data: FormData):
     return {"message": "Formulario recibido", "data": data}
 
-# Endpoints para dueños
+# Endpoints for owners
 @app.get("/duenos/")
 def get_duenos():
     if os.path.exists(registroDuenos_csv):
@@ -147,7 +150,36 @@ async def buscar_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
+@app.get("/buscar_dueno_por_nombre/{nombre_dueno}")
+async def buscar_dueno_por_nombre(nombre_dueno: str):
+    try:
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_df = pd.read_csv(registroDuenos_csv)
+        # Asegúrate de que los nombres no tengan espacios en blanco adicionales y que la búsqueda sea insensible a mayúsculas y minúsculas
+        registro_df['nombre_dueno'] = registro_df['nombre_dueno'].str.strip()
+        dueño = registro_df[registro_df['nombre_dueno'].str.contains(nombre_dueno.strip(), case=False, na=False)]
+        if dueño.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        return dueño.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
+@app.get("/buscar_dueno_por_mascota/{nombre_mascota}")
+async def buscar_dueno_por_mascota(nombre_mascota: str):
+    try:
+        if not os.path.exists(registroMascotas_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de mascotas no encontrado.")
+        registro_df_mascotas = pd.read_csv(registroMascotas_csv)
+        mascota = registro_df_mascotas[registro_df_mascotas['nombre'].str.strip().str.contains(nombre_mascota.strip(), case=False, na=False)]
+        if mascota.empty:
+            raise HTTPException(status_code=404, detail="Mascota no encontrada.")
+        dni_dueno = mascota['propietario'].values[0]
+        return await buscar_dueno(dni_dueno)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño por mascota: {str(e)}")
+
+# Endpoints for pets
 @app.post("/alta_mascota/")
 async def alta_mascota(data: Mascota):
     try:
@@ -155,7 +187,7 @@ async def alta_mascota(data: Mascota):
             registro_df = pd.read_csv(registroMascotas_csv)
         else:
             registro_df = pd.DataFrame(columns=[
-                "nombre", "especie", "raza", "edad", "propietario"
+                "nombre", "especie", "raza", "fecha_nacimiento", "patologias_previas", "propietario"
             ])
         nuevo_registro = pd.DataFrame([data.dict()])
         registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
@@ -193,7 +225,19 @@ def eliminar_mascota(nombre: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al eliminar mascota: {str(e)}")
 
-# Endpoints para citas
+@app.get("/mascotas/")
+def get_mascotas():
+    try:
+        if os.path.exists(registroMascotas_csv):
+            registro_df = pd.read_csv(registroMascotas_csv)
+            mascotas = registro_df.to_dict(orient="records")
+            return mascotas
+        else:
+            raise HTTPException(status_code=404, detail="No hay mascotas registradas")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al recuperar las mascotas: {str(e)}")
+
+# Endpoints for appointments
 citas_db = []
 next_id = 1
 
@@ -221,32 +265,3 @@ def eliminar_cita(cita_id: int):
             del citas_db[index]
             return {"detail": "Cita eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
-
-# Eliminar la segunda definición duplicada de get_mascotas
-@app.get("/mascotas/")
-def get_mascotas():
-    try:
-        if os.path.exists(registroMascotas_csv):
-            registro_df = pd.read_csv(registroMascotas_csv)
-            mascotas = registro_df.to_dict(orient="records")
-            return mascotas
-        else:
-            raise HTTPException(status_code=404, detail="No hay mascotas registradas")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al recuperar las mascotas: {e}")
-
-@app.post("/mascotas/")
-async def alta_mascota(data: Mascota):
-    try:
-        if os.path.exists(registroMascotas_csv):
-            registro_df = pd.read_csv(registroMascotas_csv)
-        else:
-            registro_df = pd.DataFrame(columns=[
-                "nombre", "especie", "raza", "edad", "propietario"
-            ])
-        nuevo_registro = pd.DataFrame([data.dict()])
-        registro_df = pd.concat([registro_df, nuevo_registro], ignore_index=True)
-        registro_df.to_csv(registroMascotas_csv, index=False)
-        return {"message": "Mascota registrada correctamente"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
