@@ -1,5 +1,7 @@
 import streamlit as st
 import requests
+import pandas as pd
+import os
 
 st.title("Registro de Dueños")
 
@@ -59,3 +61,33 @@ if submit_dueno:
         st.success("Dueño registrado correctamente")
     else:
         st.error("Error al registrar dueño")
+
+# Mostrar el archivo CSV de dueños registrados
+st.header("Dueños Registrados")
+csv_path = '/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroDuenos.csv'
+st.write(f"Verificando la existencia del archivo: {csv_path}")
+if os.path.exists(csv_path):
+    df = pd.read_csv(csv_path)
+    st.markdown(
+        """
+        <style>
+        .dataframe {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .dataframe th, .dataframe td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .dataframe th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #4CAF50;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    st.dataframe(df)
+else:
+    st.error(f"El archivo {csv_path} no se encontró.")
