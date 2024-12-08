@@ -25,6 +25,11 @@ def obtener_mascotas():
         st.error(f"Error al obtener las mascotas: {response.status_code} - {response.text}")
         return []
 
+def eliminar_mascota(nombre):
+    url = f'http://localhost:8000/mascotas/{nombre}'
+    response = requests.delete(url)
+    return response.status_code
+
 with st.form("registro_mascota"):
     nombre = st.text_input("Nombre de la mascota")
     especie = st.selectbox("Especie", ["Perro", "Gato", "Ave", "Otro"])
@@ -40,6 +45,17 @@ with st.form("registro_mascota"):
             st.session_state["refresh"] = True
         else:
             st.error("Error al registrar la mascota")
+
+with st.form("eliminar_mascota"):
+    nombre_eliminar = st.text_input("Nombre de la mascota a eliminar")
+    submitted_eliminar = st.form_submit_button("Eliminar")
+    if submitted_eliminar:
+        status_code = eliminar_mascota(nombre_eliminar)
+        if status_code == 200:
+            st.success("Mascota eliminada exitosamente")
+            st.session_state["refresh"] = True
+        else:
+            st.error("Error al eliminar la mascota")
 
 st.header("Mascotas Registradas")
 if "refresh" in st.session_state and st.session_state["refresh"]:
