@@ -134,6 +134,25 @@ async def dar_baja_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
+@app.delete("/duenos/nombre/{nombre_dueno}")
+async def dar_baja_dueno_por_nombre(nombre_dueno: str):
+    try:
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
+        registro_df = pd.read_csv(registroDuenos_csv)
+        registro_df["nombre_dueno"] = registro_df["nombre_dueno"].astype(str).str.strip()
+        if nombre_dueno.strip() not in registro_df["nombre_dueno"].values:
+            raise HTTPException(status_code=404, detail="Dueño con nombre especificado no encontrado.")
+        registro_df = registro_df[registro_df["nombre_dueno"] != nombre_dueno.strip()]
+        registro_df.to_csv(registroDuenos_csv, index=False)
+        return {"message": f"Dueño con nombre {nombre_dueno} eliminado correctamente"}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Archivo de registros no encontrado.")
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=500, detail="El archivo de registros está vacío o corrupto.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
+
 @app.get("/duenos/{dni_dueno}")
 async def buscar_dueno(dni_dueno: str):
     try:

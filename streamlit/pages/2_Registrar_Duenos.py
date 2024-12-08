@@ -62,6 +62,34 @@ if submit_dueno:
     else:
         st.error("Error al registrar dueño")
 
+def eliminar_dueno(dni_dueno):
+    url = f'http://localhost:8000/duenos/{dni_dueno}'
+    response = requests.delete(url)
+    return response.status_code
+
+st.header("Eliminar Dueño por DNI")
+dni_dueno_eliminar = st.text_input("DNI del Dueño a eliminar", key="dni_dueno_eliminar")
+if st.button("Eliminar Dueño por DNI", key="eliminar_dueno_dni"):
+    status_code = eliminar_dueno(dni_dueno_eliminar)
+    if status_code == 200:
+        st.success("Dueño eliminado exitosamente")
+    else:
+        st.error("Error al eliminar el dueño")
+
+def eliminar_dueno(nombre_dueno):
+    url = f'http://localhost:8000/duenos/nombre/{nombre_dueno}'
+    response = requests.delete(url)
+    return response.status_code
+
+st.header("Eliminar Dueño por Nombre")
+nombre_dueno_eliminar = st.text_input("Nombre del Dueño a eliminar", key="nombre_dueno_eliminar")
+if st.button("Eliminar Dueño por Nombre", key="eliminar_dueno_nombre"):
+    status_code = eliminar_dueno(nombre_dueno_eliminar)
+    if status_code == 200:
+        st.success("Dueño eliminado exitosamente")
+    else:
+        st.error("Error al eliminar el dueño")
+
 # Mostrar el archivo CSV de dueños registrados
 st.header("Dueños Registrados")
 csv_path = '/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroDuenos.csv'
