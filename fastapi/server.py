@@ -134,7 +134,7 @@ async def dar_baja_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
-@app.get("/duenos/{dni_dueno}")
+@app.get("/buscar_dueno/{dni_dueno}")
 async def buscar_dueno(dni_dueno: str):
     try:
         if not os.path.exists(registroDuenos_csv):
@@ -147,6 +147,41 @@ async def buscar_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
+@app.get("/buscar_dueno_por_nombre/{nombre_dueno}")
+async def buscar_dueno_por_nombre(nombre_dueno: str):
+    try:
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_df = pd.read_csv(registroDuenos_csv)
+        dueño = registro_df[registro_df['nombre_dueno'].str.strip().str.lower() == nombre_dueno.strip().lower()]
+        if dueño.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        return dueño.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
+
+@app.get("/buscar_dueno_por_mascota/{nombre_mascota}")
+async def buscar_dueno_por_mascota(nombre_mascota: str):
+    try:
+        if not os.path.exists(registroMascotas_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de mascotas no encontrado.")
+        registro_mascotas_df = pd.read_csv(registroMascotas_csv)
+        mascota = registro_mascotas_df[registro_mascotas_df['nombre'].str.strip().str.lower() == nombre_mascota.strip().lower()]
+        if mascota.empty:
+            raise HTTPException(status_code=404, detail="Mascota no encontrada.")
+        
+        propietario = mascota.iloc[0]['propietario']
+        
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_duenos_df = pd.read_csv(registroDuenos_csv)
+        dueño = registro_duenos_df[registro_duenos_df['nombre_dueno'].str.strip().str.lower() == propietario.strip().lower()]
+        if dueño.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        
+        return dueño.to_dict(orient='records')[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 @app.post("/alta_mascota/")
 async def alta_mascota(data: Mascota):
