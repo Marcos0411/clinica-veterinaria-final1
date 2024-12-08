@@ -30,6 +30,15 @@ def eliminar_mascota(nombre):
     response = requests.delete(url)
     return response.status_code
 
+def obtener_duenos():
+    url = 'http://localhost:8000/duenos/'
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Error al obtener los dueños: {response.status_code} - {response.text}")
+        return []
+
 with st.form("registro_mascota"):
     nombre = st.text_input("Nombre de la mascota")
     especie = st.selectbox("Especie", ["Perro", "Gato", "Ave", "Otro"])
@@ -39,12 +48,16 @@ with st.form("registro_mascota"):
     
     submitted = st.form_submit_button("Registrar")
     if submitted:
-        status_code = registrar_mascota(nombre, especie, raza, edad, propietario)
-        if status_code == 200:
-            st.success("Mascota registrada exitosamente")
-            st.session_state["refresh"] = True
+        duenos = obtener_duenos()
+        if any(dueno['nombre_dueno'] == propietario for dueno in duenos):
+            status_code = registrar_mascota(nombre, especie, raza, edad, propietario)
+            if status_code == 200:
+                st.success("Mascota registrada exitosamente")
+                st.session_state["refresh"] = True
+            else:
+                st.error("Error al registrar la mascota")
         else:
-            st.error("Error al registrar la mascota")
+            st.error("El propietario no existe. Por favor, registre al propietario primero.")
 
 with st.form("eliminar_mascota"):
     nombre_eliminar = st.text_input("Nombre de la mascota a eliminar")
