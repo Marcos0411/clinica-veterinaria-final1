@@ -40,6 +40,13 @@ def info_box (texto, color=None):
 
 df_merged = load_data('http://localhost:8000/retrieve_data')
 
+# Convertir columnas a tipos numéricos
+df_merged['importe_adj_con_iva'] = pd.to_numeric(df_merged['importe_adj_con_iva'], errors='coerce')
+df_merged['presupuesto_con_iva'] = pd.to_numeric(df_merged['presupuesto_con_iva'], errors='coerce')
+df_merged['numlicit'] = pd.to_numeric(df_merged['numlicit'], errors='coerce')
+
+# Filtrar filas con valores NaN en las columnas necesarias
+df_merged = df_merged.dropna(subset=['importe_adj_con_iva', 'presupuesto_con_iva', 'numlicit'])
 
 registros = str(df_merged.shape[0])
 adjudicatarios = str(len(df_merged.adjuducatario.unique()))
