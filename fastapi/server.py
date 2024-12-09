@@ -166,6 +166,38 @@ async def buscar_dueno(dni_dueno: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
+@app.get("/duenos/nombre/{nombre_dueno}")
+async def buscar_dueno_por_nombre(nombre_dueno: str):
+    try:
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_df = pd.read_csv(registroDuenos_csv)
+        duenos = registro_df[registro_df['nombre_dueno'].str.strip() == nombre_dueno.strip()]
+        if duenos.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        return duenos.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
+
+@app.get("/duenos/mascota/{nombre_mascota}")
+async def buscar_dueno_por_mascota(nombre_mascota: str):
+    try:
+        if not os.path.exists(registroMascotas_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de mascotas no encontrado.")
+        registro_df = pd.read_csv(registroMascotas_csv)
+        mascota = registro_df[registro_df['nombre'].str.strip() == nombre_mascota.strip()]
+        if mascota.empty:
+            raise HTTPException(status_code=404, detail="Mascota no encontrada.")
+        propietario = mascota['propietario'].values[0]
+        if not os.path.exists(registroDuenos_csv):
+            raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
+        registro_duenos_df = pd.read_csv(registroDuenos_csv)
+        dueno = registro_duenos_df[registro_duenos_df['nombre_dueno'].str.strip() == propietario.strip()]
+        if dueno.empty:
+            raise HTTPException(status_code=404, detail="Dueño no encontrado.")
+        return dueno.to_dict(orient='records')[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
 @app.post("/alta_mascota/")
 async def alta_mascota(data: Mascota):
@@ -269,3 +301,59 @@ async def alta_mascota(data: Mascota):
         return {"message": "Mascota registrada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
+    
+
+# Definición de modelos para tratamientos
+class Tratamiento(BaseModel):
+    nombre: str
+    precio: float
+
+class ClinicaVeterinaria:
+    def __init__(self):
+        self.tratamientos = [
+            Tratamiento(nombre="Análisis: sangre y hormonales", precio=50.0),
+            Tratamiento(nombre="Vacunación", precio=30.0),
+            Tratamiento(nombre="Desparasitación", precio=20.0),
+            Tratamiento(nombre="Revisión general", precio=40.0),
+            Tratamiento(nombre="Cardiología", precio=60.0),
+            Tratamiento(nombre="Cutánea", precio=50.0),
+            Tratamiento(nombre="Broncológica", precio=55.0),
+            Tratamiento(nombre="Ecografías", precio=70.0),
+            Tratamiento(nombre="Limpieza bucal", precio=45.0),
+            Tratamiento(nombre="Extracción de piezas dentales", precio=80.0),
+            Tratamiento(nombre="Castración", precio=100.0),
+            Tratamiento(nombre="Cirugía Abdominal", precio=200.0),
+            Tratamiento(nombre="Cirugía Cardíaca", precio=300.0),
+            Tratamiento(nombre="Cirugía Articular y ósea", precio=250.0),
+            Tratamiento(nombre="Cirugía de Hernias", precio=150.0),
+        ]
+
+    def agregar_tratamiento(self, tratamiento: Tratamiento):
+        self.tratamientos.append(tratamiento)
+        return tratamiento
+
+    def eliminar_tratamiento(self, nombre: str):
+        tratamiento = next((t for t in self.tratamientos if t.nombre == nombre), None)
+        if tratamiento:
+            self.tratamientos.remove(tratamiento)
+            return tratamiento
+        else:
+            raise HTTPException(status_code=404, detail="Tratamiento no encontrado")
+
+    def listar_tratamientos(self):
+        return self.tratamientos
+
+clinica = ClinicaVeterinaria()
+
+# Rutas para tratamientos
+@app.post("/tratamientos/", response_model=Tratamiento)
+def agregar_tratamiento(tratamiento: Tratamiento):
+    return clinica.agregar_tratamiento(tratamiento)
+
+@app.delete("/tratamientos/{nombre}", response_model=Tratamiento)
+def eliminar_tratamiento(nombre: str):
+    return clinica.eliminar_tratamiento(nombre)
+
+@app.get("/tratamientos/", response_model=List[Tratamiento])
+def listar_tratamientos():
+    return clinica.listar_tratamientos()

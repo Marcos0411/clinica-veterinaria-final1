@@ -9,7 +9,7 @@ st.title("Registro de Dueños")
 st.header("Buscar Dueño Existente por DNI")
 dni_dueno = st.text_input("DNI del Dueño")
 if st.button("Buscar Dueño por DNI"):
-    response = requests.get(f"http://localhost:8000/buscar_dueno/{dni_dueno}")
+    response = requests.get(f"http://localhost:8000/duenos/{dni_dueno}")
     if response.status_code == 200:
         dueno = response.json()
         st.write("Dueño encontrado:", dueno)
@@ -20,7 +20,7 @@ if st.button("Buscar Dueño por DNI"):
 st.header("Buscar Dueño Existente por Nombre")
 nombre_dueno = st.text_input("Nombre del Dueño")
 if st.button("Buscar Dueño por Nombre"):
-    response = requests.get(f"http://localhost:8000/buscar_dueno_por_nombre/{nombre_dueno}")
+    response = requests.get(f"http://localhost:8000/duenos/nombre/{nombre_dueno}")
     if response.status_code == 200:
         duenos = response.json()
         st.write("Dueños encontrados:", duenos)
@@ -31,7 +31,7 @@ if st.button("Buscar Dueño por Nombre"):
 st.header("Buscar Dueño Existente por Nombre de Mascota")
 nombre_mascota = st.text_input("Nombre de la Mascota")
 if st.button("Buscar Dueño por Nombre de Mascota"):
-    response = requests.get(f"http://localhost:8000/buscar_dueno_por_mascota/{nombre_mascota}")
+    response = requests.get(f"http://localhost:8000/duenos/mascota/{nombre_mascota}")
     if response.status_code == 200:
         dueno = response.json()
         st.write("Dueño encontrado:", dueno)
