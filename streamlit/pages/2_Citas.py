@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+from streamlit_calendar import calendar
 
 # URL base de la API de FastAPI
 API_URL = "http://localhost:8000"
@@ -8,14 +9,14 @@ API_URL = "http://localhost:8000"
 # Función para registrar una nueva cita
 def registrar_cita(mascota, dueno, tratamiento, fecha, hora):
     response = requests.post(f"{API_URL}/citas/", json={
-        "nombre_mascota": mascota,
-        "nombre_dueno": dueno,
+        "mascota": mascota,
+        "dueno": dueno,
         "tratamiento": tratamiento,
-        "fecha_inicio": f"{fecha}T{hora}"
+        "fecha": fecha,
+        "hora": hora
     })
     if response.status_code == 200:
         st.success("Cita registrada correctamente")
-        st.session_state["refresh"] = True
     else:
         st.error("Error al registrar cita")
 
@@ -60,7 +61,6 @@ def cancelar_cita(cita_id):
     response = requests.delete(f"{API_URL}/citas/{cita_id}")
     if response.status_code == 200:
         st.success("Cita cancelada correctamente")
-        st.session_state["refresh"] = True
     else:
         st.error("Error al cancelar cita")
 
@@ -84,24 +84,10 @@ with st.form("registro_cita"):
     if submitted:
         registrar_cita(mascota, dueno, tratamiento, fecha, hora)
 
-# Mostrar citas registradas
-st.header("Citas Registradas")
-if "refresh" in st.session_state and st.session_state["refresh"]:
-    citas = obtener_citas()
-    st.session_state["refresh"] = False
-else:
-    citas = obtener_citas()
+# Mostrar calendario de citas
+st.header("Calendario de Citas")
+citas = obtener_citas()
+citas_df = pd.DataFrame(citas)
 
-if citas:
-    df_citas = pd.DataFrame(citas)
-    st.dataframe(df_citas)
-else:
-    st.write("No hay citas registradas")
-
-# Formulario para cancelar citas
-st.header("Cancelar Cita")
-with st.form("cancelar_cita"):
-    cita_id = st.number_input("ID de la cita a cancelar", min_value=1, step=1)
-    submitted_cancelar = st.form_submit_button("Cancelar Cita")
-    if submitted_cancelar:
-        cancelar_cita(cita_id)
+# Mostrar calendario interactivo
+calendar(citas_df, on_event_click=cancelar_cita, on_event_drag=registrar_cita)
