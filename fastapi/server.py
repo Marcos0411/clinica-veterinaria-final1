@@ -66,6 +66,7 @@ class ListadoContratos(BaseModel):
 # Archivos CSV
 registroDuenos_csv = "registroDuenos.csv"
 registroMascotas_csv = "registroMascotas.csv"
+registroProductos_csv = "registroProductos.csv"
 
 @app.get("/retrieve_data/")
 def retrieve_data():
@@ -365,3 +366,83 @@ def eliminar_tratamiento(nombre: str):
 @app.get("/tratamientos/", response_model=List[Tratamiento])
 def listar_tratamientos():
     return clinica.listar_tratamientos()
+
+# Mock database
+productos_db = []
+
+class Producto(BaseModel):
+    id: Optional[int]  # Make id optional
+    categoria: str
+    marca: str
+    precio: float
+    stock: int = 0  # Add stock field
+
+def leer_productos():
+    if os.path.exists(registroProductos_csv):
+        return pd.read_csv(registroProductos_csv).to_dict(orient="records")
+    return []
+
+def guardar_productos(productos):
+    pd.DataFrame(productos).to_csv(registroProductos_csv, index=False)
+
+@app.get("/productos/", response_model=List[Producto])
+def obtener_productos():
+    return leer_productos()
+
+@app.post("/productos/", response_model=Producto)
+def agregar_producto(producto: Producto):
+    productos = leer_productos()
+    producto.id = max([p["id"] for p in productos], default=0) + 1  # Assign new id
+    productos.append(producto.dict())
+    guardar_productos(productos)
+    return producto
+
+@app.delete("/productos/{producto_id}")
+def eliminar_producto(producto_id: int):
+    productos = leer_productos()
+    productos = [producto for producto in productos if producto["id"] != producto_id]
+    guardar_productos(productos)
+    return {"message": "Producto eliminado correctamente"}
+
+class PrecioUpdate(BaseModel):
+    precio: float
+
+@app.put("/productos/{producto_id}/")
+def modificar_precio(producto_id: int, precio_update: PrecioUpdate):
+    productos = leer_productos()
+    for producto in productos:
+        if producto["id"] == producto_id:
+            producto["precio"] = precio_update.precio
+            guardar_productos(productos)
+            return {"message": "Precio modificado correctamente"}
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+@app.put("/productos/{producto_id}/stock/")
+def actualizar_stock(producto_id: int, cantidad: int):
+    productos = leer_productos()
+    for producto in productos:
+        if producto["id"] == producto_id:
+            producto["stock"] += cantidad
+            guardar_productos(productos)
+            return {"message": "Stock actualizado correctamente"}
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+@app.get("/productos/search", response_model=List[Producto])
+def buscar_productos(criterio: str):
+    productos = leer_productos()
+    matched_productos = [producto for producto in productos if criterio.lower() in producto["categoria"].lower() or criterio.lower() in producto["marca"].lower()]
+    return matched_productos
+
+@app.post("/ventas/")
+def vender_producto(producto_id: int, cantidad: int):
+    productos = leer_productos()
+    for producto in productos:
+        if producto["id"] == producto_id:
+            if producto["stock"] >= cantidad:
+                producto["stock"] -= cantidad
+                guardar_productos(productos)
+                return {"message": "Producto vendido correctamente", "producto": producto}
+            else:
+                raise HTTPException(status_code=400, detail="Stock insuficiente")
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
+
