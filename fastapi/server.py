@@ -3,6 +3,7 @@ import io
 import os
 import csv
 from fastapi.responses import JSONResponse
+import ast
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 import pandas as pd
 from typing import List, Optional
@@ -490,6 +491,10 @@ class Factura(BaseModel):
     total: float
     estado_pago: str
 
+class FacturaUpdate(BaseModel):
+    tratamientos: List[str]
+    total: float
+
 facturas_db = []
 
 registroFacturas_csv = "facturas.csv"
@@ -501,7 +506,13 @@ if os.path.exists(registroFacturas_csv):
 
 @app.post("/facturas/", response_model=Factura)
 def crear_factura(factura: Factura):
-    facturas_db.append(factura)
+    if isinstance(factura.tratamientos, str):
+        try:
+            factura.tratamientos = ast.literal_eval(factura.tratamientos)
+        except (ValueError, SyntaxError):
+            factura.tratamientos = [factura.tratamientos]
+    factura.tratamientos = str(factura.tratamientos).replace("'", '"')  # Ensure tratamientos is a valid JSON string
+    facturas_db.append(factura.dict())  # Store as dictionary
     # Append to CSV
     nuevo_registro = pd.DataFrame([factura.dict()])
     if os.path.exists(registroFacturas_csv):
@@ -523,6 +534,19 @@ def actualizar_estado_factura(factura_id: int, estado_pago_update: EstadoPagoUpd
     if not factura:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     factura['estado_pago'] = estado_pago_update.estado_pago
+    # Update CSV
+    registro_df = pd.DataFrame(facturas_db)
+    registro_df.to_csv(registroFacturas_csv, index=False)
+    return factura
+
+@app.put("/facturas/{factura_id}/tratamientos")
+def actualizar_factura_con_tratamientos(factura_id: int, factura_update: FacturaUpdate):
+    factura = next((f for f in facturas_db if f['id'] == factura_id), None)
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    tratamientos_actuales = ast.literal_eval(factura['tratamientos']) if isinstance(factura['tratamientos'], str) else factura['tratamientos']
+    factura['tratamientos'] = str(list(set(tratamientos_actuales + factura_update.tratamientos))).replace("'", '"')  # Ensure tratamientos is a valid JSON string
+    factura['total'] = factura_update.total
     # Update CSV
     registro_df = pd.DataFrame(facturas_db)
     registro_df.to_csv(registroFacturas_csv, index=False)

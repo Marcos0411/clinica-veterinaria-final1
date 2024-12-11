@@ -2,3 +2,7 @@ id,nombre_mascota,nombre_dueno,tratamiento,fecha_inicio,estado
 1,ramon,Matias,Cirugía de Hernias,2024-12-17 14:57:00,aceptada
 2,animalito,Alex lopez,Broncológica,2024-12-12 13:45:00,aceptada
 3,gabri,Pablo huidobro,Cutánea,2024-12-15 15:00:00,aceptada
+4,pol,Juan Carlos Ramirez,Cirugía Articular y ósea,2024-12-17 19:18:00,aceptada
+5,Rami,pedro juarez,Castración,2024-12-18 10:00:00,aceptada
+6,pochi,jorge macias,Cirugía Abdominal,2024-12-15 14:45:00,aceptada
+7,kai,matias gonzalez,Desparasitación,2024-12-19 12:30:00,aceptada
