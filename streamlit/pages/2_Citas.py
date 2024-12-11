@@ -1,19 +1,20 @@
 import streamlit as st
 import requests
 import pandas as pd
-from streamlit_calendar import calendar
+
 
 # URL base de la API de FastAPI
 API_URL = "http://localhost:8000"
 
 # Función para registrar una nueva cita
 def registrar_cita(mascota, dueno, tratamiento, fecha, hora):
+    fecha_hora = f"{fecha.strftime('%Y-%m-%d')} {hora.strftime('%H:%M:%S')}"
     response = requests.post(f"{API_URL}/citas/", json={
-        "mascota": mascota,
-        "dueno": dueno,
+        "nombre_mascota": mascota,
+        "nombre_dueno": dueno,
         "tratamiento": tratamiento,
-        "fecha": fecha,
-        "hora": hora
+        "fecha_inicio": fecha_hora,
+        "estado": "pendiente"
     })
     if response.status_code == 200:
         st.success("Cita registrada correctamente")
@@ -51,7 +52,12 @@ def obtener_tratamientos():
 def obtener_citas():
     response = requests.get(f"{API_URL}/citas/")
     if response.status_code == 200:
-        return response.json()
+        citas = response.json()
+        for cita in citas:
+            for key, value in cita.items():
+                if isinstance(value, float) and (value == float('inf') or value == float('-inf') or value != value):
+                    cita[key] = str(value)
+        return citas
     else:
         st.error("Error al obtener citas")
         return []
@@ -63,6 +69,14 @@ def cancelar_cita(cita_id):
         st.success("Cita cancelada correctamente")
     else:
         st.error("Error al cancelar cita")
+
+# Función para actualizar el estado de una cita
+def actualizar_estado_cita(cita_id, nuevo_estado):
+    response = requests.put(f"{API_URL}/citas/{cita_id}", json={"estado": nuevo_estado})
+    if response.status_code == 200:
+        st.success(f"Cita {nuevo_estado} correctamente")
+    else:
+        st.error(f"Error al {nuevo_estado} la cita")
 
 # Interfaz de usuario con Streamlit
 st.title("Gestión de Citas")
@@ -84,10 +98,18 @@ with st.form("registro_cita"):
     if submitted:
         registrar_cita(mascota, dueno, tratamiento, fecha, hora)
 
-# Mostrar calendario de citas
-st.header("Calendario de Citas")
+# Mostrar tabla de citas
+st.header("Tabla de Citas")
 citas = obtener_citas()
 citas_df = pd.DataFrame(citas)
 
-# Mostrar calendario interactivo
-calendar(citas_df, on_event_click=cancelar_cita, on_event_drag=registrar_cita)
+# Mostrar tabla interactiva con botones
+for index, row in citas_df.iterrows():
+    st.write(f"Cita ID: {row['id']}, Mascota: {row['nombre_mascota']}, Dueño: {row['nombre_dueno']}, Tratamiento: {row['tratamiento']}, Fecha: {row['fecha_inicio']}, Estado: {row['estado']}")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button(f"Aceptar {row['id']}", key=f"aceptar_{row['id']}"):
+            actualizar_estado_cita(row['id'], "aceptada")
+    with col2:
+        if st.button(f"Rechazar {row['id']}", key=f"rechazar_{row['id']}"):
+            actualizar_estado_cita(row['id'], "rechazada")

@@ -40,7 +40,10 @@ class Cita(BaseModel):
     nombre_dueno: str
     tratamiento: str
     fecha_inicio: datetime
-    fecha_fin: Optional[datetime] = None
+    estado: str
+    tratamientos_realizados: Optional[List[str]] = []
+    forma_pago: Optional[str] = None
+    pagada: Optional[bool] = False
 
 class Contrato(BaseModel):
     fecha: str
@@ -67,6 +70,7 @@ class ListadoContratos(BaseModel):
 registroDuenos_csv = "registroDuenos.csv"
 registroMascotas_csv = "registroMascotas.csv"
 registroProductos_csv = "registroProductos.csv"
+registroCitas_csv = "citas.csv"
 
 @app.get("/retrieve_data/")
 def retrieve_data():
@@ -263,14 +267,20 @@ def crear_cita(cita: Cita):
     cita.id = next_id
     next_id += 1
     citas_db.append(cita)
+    # Save to CSV
+    citas_df = pd.DataFrame([c.dict() for c in citas_db])
+    citas_df.to_csv(registroCitas_csv, index=False)
     return cita
 
 @app.put("/citas/{cita_id}", response_model=Cita)
-def modificar_cita(cita_id: int, cita_actualizada: Cita):
+def modificar_cita(cita_id: int, cita_actualizada: dict):
     for index, cita in enumerate(citas_db):
         if cita.id == cita_id:
-            citas_db[index] = cita_actualizada
-            citas_db[index].id = cita_id
+            for key, value in cita_actualizada.items():
+                setattr(citas_db[index], key, value)
+            # Save to CSV
+            citas_df = pd.DataFrame([c.dict() for c in citas_db])
+            citas_df.to_csv(registroCitas_csv, index=False)
             return citas_db[index]
     raise HTTPException(status_code=404, detail="Cita no encontrada")
 
@@ -281,6 +291,24 @@ def eliminar_cita(cita_id: int):
             del citas_db[index]
             return {"detail": "Cita eliminada exitosamente"}
     raise HTTPException(status_code=404, detail="Cita no encontrada")
+
+@app.get("/citas/")
+def obtener_citas():
+    try:
+        if os.path.exists(registroCitas_csv):
+            registro_df = pd.read_csv(registroCitas_csv)
+            registro_df['tratamientos_realizados'] = registro_df['tratamientos_realizados'].apply(eval)
+            registro_df['pagada'] = registro_df['pagada'].astype(bool)
+            citas = registro_df.to_dict(orient="records")
+            for cita in citas:
+                for key, value in cita.items():
+                    if isinstance(value, float) and (value == float('inf') or value == float('-inf') or value != value):
+                        cita[key] = str(value)
+            return citas
+        else:
+            raise HTTPException(status_code=404, detail="No hay citas registradas")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al recuperar las citas: {e}")
 
 # Eliminar la segunda definición duplicada de get_mascotas
 @app.get("/mascotas/")
@@ -310,7 +338,6 @@ async def alta_mascota(data: Mascota):
         return {"message": "Mascota registrada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar los datos: {e}")
-    
 
 # Definición de modelos para tratamientos
 class Tratamiento(BaseModel):
