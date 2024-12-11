@@ -73,6 +73,21 @@ def actualizar_estado_cita(cita_id, nuevo_estado):
     else:
         st.error(f"Error al {nuevo_estado} la cita")
 
+# Función para modificar una cita
+def modificar_cita(cita_id, mascota, dueno, tratamiento, fecha, hora):
+    fecha_hora = f"{fecha.strftime('%Y-%m-%d')} {hora.strftime('%H:%M:%S')}"
+    response = requests.put(f"{API_URL}/citas/{cita_id}", json={
+        "nombre_mascota": mascota,
+        "nombre_dueno": dueno,
+        "tratamiento": tratamiento,
+        "fecha_inicio": fecha_hora,
+        "estado": "pendiente"
+    })
+    if response.status_code == 200:
+        st.success("Cita modificada correctamente")
+    else:
+        st.error("Error al modificar cita")
+
 # Interfaz de usuario con Streamlit
 st.title("Gestión de Citas")
 
@@ -101,10 +116,24 @@ citas_df = pd.DataFrame(citas)
 # Mostrar tabla interactiva con botones
 for index, row in citas_df.iterrows():
     st.write(f"Cita ID: {row['id']}, Mascota: {row['nombre_mascota']}, Dueño: {row['nombre_dueno']}, Tratamiento: {row['tratamiento']}, Fecha: {row['fecha_inicio']}, Estado: {row['estado']}")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         if st.button(f"Aceptar {row['id']}", key=f"aceptar_{row['id']}_{index}"):
             actualizar_estado_cita(row['id'], "aceptada")
     with col2:
         if st.button(f"Rechazar {row['id']}", key=f"rechazar_{row['id']}_{index}"):
             actualizar_estado_cita(row['id'], "rechazada")
+    with col3:
+        if st.button(f"Modificar {row['id']}", key=f"modificar_{row['id']}_{index}"):
+            with st.form(f"modificar_cita_{row['id']}"):
+                mascota = st.selectbox("Mascota", [m['nombre'] for m in mascotas], index=[m['nombre'] for m in mascotas].index(row['nombre_mascota']))
+                dueno = st.selectbox("Dueño", [d['nombre_dueno'] for d in duenos], index=[d['nombre_dueno'] for d in duenos].index(row['nombre_dueno']))
+                tratamiento = st.selectbox("Tratamiento", [t['nombre'] for t in tratamientos], index=[t['nombre'] for t in tratamientos].index(row['tratamiento']))
+                fecha = st.date_input("Fecha", value=pd.to_datetime(row['fecha_inicio']).date())
+                hora = st.time_input("Hora", value=pd.to_datetime(row['fecha_inicio']).time())
+                submitted = st.form_submit_button("Modificar Cita")
+                if submitted:
+                    modificar_cita(row['id'], mascota, dueno, tratamiento, fecha, hora)
+    with col4:
+        if st.button(f"Cancelar {row['id']}", key=f"cancelar_{row['id']}_{index}"):
+            cancelar_cita(row['id'])
