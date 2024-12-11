@@ -88,6 +88,46 @@ def modificar_cita(cita_id, mascota, dueno, tratamiento, fecha, hora):
     else:
         st.error("Error al modificar cita")
 
+# Función para obtener la lista de productos
+def obtener_productos():
+    response = requests.get(f"{API_URL}/productos/")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Error al obtener productos")
+        return []
+
+# Función para generar factura
+def generar_factura(cita_id):
+    cita = next((c for c in citas if c['id'] == cita_id), None)
+    if not cita:
+        st.error("Cita no encontrada")
+        return
+
+    tratamientos = obtener_tratamientos()
+    total_tratamientos = sum(t['precio'] for t in tratamientos if t['nombre'] == cita['tratamiento'])
+    
+    productos = obtener_productos()
+    total_productos = sum(p['precio'] for p in productos if p['id'] in cita.get('productos', []))
+    
+    total = total_tratamientos + total_productos
+
+    factura = {
+        "id": cita_id,
+        "cliente": cita['nombre_dueno'],
+        "mascota": cita['nombre_mascota'],
+        "tratamientos": cita['tratamiento'],
+        "productos": cita.get('productos', []),
+        "total": total,
+        "estado_pago": "pendiente"
+    }
+    
+    response = requests.post(f"{API_URL}/facturas/", json=factura)
+    if response.status_code == 200:
+        st.success("Factura generada correctamente")
+    else:
+        st.error("Error al generar la factura")
+
 # Interfaz de usuario con Streamlit
 st.title("Gestión de Citas")
 
@@ -137,3 +177,6 @@ for index, row in citas_df.iterrows():
     with col4:
         if st.button(f"Cancelar {row['id']}", key=f"cancelar_{row['id']}_{index}"):
             cancelar_cita(row['id'])
+    with col5:
+        if st.button(f"Generar Factura {row['id']}", key=f"factura_{row['id']}_{index}"):
+            generar_factura(row['id'])

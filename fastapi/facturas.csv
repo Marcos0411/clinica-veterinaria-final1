@@ -1,0 +1,3 @@
+id,cliente,mascota,tratamientos,productos,total,estado_pago
+1,Matias,ramon,Cirugía de Hernias,[],150.0,pagada
+2,Alex lopez,animalito,Broncológica,[],55.0,pendiente

@@ -481,3 +481,50 @@ def vender_producto(venta: Venta):
                 raise HTTPException(status_code=400, detail="Stock insuficiente")
     raise HTTPException(status_code=404, detail="Producto no encontrado")
 
+class Factura(BaseModel):
+    id: int
+    cliente: str
+    mascota: str
+    tratamientos: str
+    productos: List[int]
+    total: float
+    estado_pago: str
+
+facturas_db = []
+
+registroFacturas_csv = "facturas.csv"
+
+# Initialize facturas_db from the CSV file
+if os.path.exists(registroFacturas_csv):
+    registro_df = pd.read_csv(registroFacturas_csv)
+    facturas_db = registro_df.to_dict(orient="records")
+
+@app.post("/facturas/", response_model=Factura)
+def crear_factura(factura: Factura):
+    facturas_db.append(factura)
+    # Append to CSV
+    nuevo_registro = pd.DataFrame([factura.dict()])
+    if os.path.exists(registroFacturas_csv):
+        nuevo_registro.to_csv(registroFacturas_csv, mode='a', header=False, index=False)
+    else:
+        nuevo_registro.to_csv(registroFacturas_csv, index=False)
+    return factura
+
+@app.get("/facturas/")
+def obtener_facturas():
+    return facturas_db
+
+class EstadoPagoUpdate(BaseModel):
+    estado_pago: str
+
+@app.put("/facturas/{factura_id}")
+def actualizar_estado_factura(factura_id: int, estado_pago_update: EstadoPagoUpdate):
+    factura = next((f for f in facturas_db if f['id'] == factura_id), None)
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    factura['estado_pago'] = estado_pago_update.estado_pago
+    # Update CSV
+    registro_df = pd.DataFrame(facturas_db)
+    registro_df.to_csv(registroFacturas_csv, index=False)
+    return factura
+
