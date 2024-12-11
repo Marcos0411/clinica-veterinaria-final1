@@ -493,6 +493,7 @@ class Factura(BaseModel):
 
 class FacturaUpdate(BaseModel):
     tratamientos: List[str]
+    productos: List[str]
     total: float
 
 facturas_db = []
@@ -545,7 +546,9 @@ def actualizar_factura_con_tratamientos(factura_id: int, factura_update: Factura
     if not factura:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     tratamientos_actuales = ast.literal_eval(factura['tratamientos']) if isinstance(factura['tratamientos'], str) else factura['tratamientos']
+    productos_actuales = ast.literal_eval(factura['productos']) if isinstance(factura['productos'], str) else factura['productos']
     factura['tratamientos'] = str(list(set(tratamientos_actuales + factura_update.tratamientos))).replace("'", '"')  # Ensure tratamientos is a valid JSON string
+    factura['productos'] = str(list(set(productos_actuales + factura_update.productos))).replace("'", '"')  # Ensure productos is a valid JSON string
     factura['total'] = factura_update.total
     # Update CSV
     registro_df = pd.DataFrame(facturas_db)
