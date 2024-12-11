@@ -5,4 +5,4 @@ id,cliente,mascota,tratamientos,productos,total,estado_pago
 4,Juan Carlos Ramirez,pol,"[""Cirugía Articular y ósea"", ""Broncológica"", ""Cirugía de Hernias""]",[],455.0,pagada
 5,pedro juarez,Rami,"[""Castración"", ""Broncológica""]",[],155.0,pagada
 6,jorge macias,pochi,"[""Cirugía Cardíaca"", ""Broncológica"", ""Cirugía Abdominal""]","[""bayer""]",563.0,pagada
-7,matias gonzalez,kai,"[""Revisión general"", ""Desparasitación""]","[""clean""]",71.0,pendiente
+7,matias gonzalez,kai,"[""Revisión general"", ""Desparasitación""]","[""moiuh"", ""clean""]",85.0,pagada
