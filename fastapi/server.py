@@ -417,29 +417,23 @@ def modificar_precio(producto_id: int, precio_update: PrecioUpdate):
             return {"message": "Precio modificado correctamente"}
     raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-@app.put("/productos/{producto_id}/stock/")
-def actualizar_stock(producto_id: int, cantidad: int):
-    productos = leer_productos()
-    for producto in productos:
-        if producto["id"] == producto_id:
-            producto["stock"] += cantidad
-            guardar_productos(productos)
-            return {"message": "Stock actualizado correctamente"}
-    raise HTTPException(status_code=404, detail="Producto no encontrado")
-
 @app.get("/productos/search", response_model=List[Producto])
 def buscar_productos(criterio: str):
     productos = leer_productos()
     matched_productos = [producto for producto in productos if criterio.lower() in producto["categoria"].lower() or criterio.lower() in producto["marca"].lower()]
     return matched_productos
 
+class Venta(BaseModel):
+    producto_id: int
+    cantidad: int
+
 @app.post("/ventas/")
-def vender_producto(producto_id: int, cantidad: int):
+def vender_producto(venta: Venta):
     productos = leer_productos()
     for producto in productos:
-        if producto["id"] == producto_id:
-            if producto["stock"] >= cantidad:
-                producto["stock"] -= cantidad
+        if producto["id"] == venta.producto_id:
+            if producto["stock"] >= venta.cantidad:
+                producto["stock"] -= venta.cantidad
                 guardar_productos(productos)
                 return {"message": "Producto vendido correctamente", "producto": producto}
             else:

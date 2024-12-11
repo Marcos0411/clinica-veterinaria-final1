@@ -57,7 +57,7 @@ def buscar_productos(criterio):
 # Función para vender un producto
 def vender_producto(producto_id, cantidad):
     response = requests.post(f"{API_URL}/ventas/", json={
-        "producto_id": producto_id,
+        "producto_id": int(producto_id),
         "cantidad": cantidad
     })
     if response.status_code == 200:
@@ -66,16 +66,6 @@ def vender_producto(producto_id, cantidad):
     else:
         st.error("Error al vender producto")
         return None
-
-# Función para actualizar el stock de un producto
-def actualizar_stock(producto_id, cantidad):
-    response = requests.put(f"{API_URL}/productos/{producto_id}/stock/", json={
-        "cantidad": cantidad
-    })
-    if response.status_code == 200:
-        st.success("Stock actualizado correctamente")
-    else:
-        st.error("Error al actualizar stock")
 
 # Interfaz de usuario con Streamlit
 st.title("Gestión de Productos")
@@ -141,11 +131,3 @@ with tab6:
             productos = obtener_productos()
             df_productos = pd.DataFrame(productos)
             st.dataframe(df_productos)
-
-# Pestaña para actualizar el stock de un producto
-with tab6:
-    st.header("Actualizar Stock de Producto")
-    producto_id = st.text_input("ID del Producto", key="actualizar_stock_producto_id")
-    cantidad = st.number_input("Cantidad", min_value=1, step=1, key="actualizar_stock_cantidad")
-    if st.button("Actualizar Stock"):
-        actualizar_stock(producto_id, cantidad)
