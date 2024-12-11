@@ -52,12 +52,7 @@ def obtener_tratamientos():
 def obtener_citas():
     response = requests.get(f"{API_URL}/citas/")
     if response.status_code == 200:
-        citas = response.json()
-        for cita in citas:
-            for key, value in cita.items():
-                if isinstance(value, float) and (value == float('inf') or value == float('-inf') or value != value):
-                    cita[key] = str(value)
-        return citas
+        return response.json()
     else:
         st.error("Error al obtener citas")
         return []
@@ -108,8 +103,8 @@ for index, row in citas_df.iterrows():
     st.write(f"Cita ID: {row['id']}, Mascota: {row['nombre_mascota']}, Dueño: {row['nombre_dueno']}, Tratamiento: {row['tratamiento']}, Fecha: {row['fecha_inicio']}, Estado: {row['estado']}")
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button(f"Aceptar {row['id']}", key=f"aceptar_{row['id']}"):
+        if st.button(f"Aceptar {row['id']}", key=f"aceptar_{row['id']}_{index}"):
             actualizar_estado_cita(row['id'], "aceptada")
     with col2:
-        if st.button(f"Rechazar {row['id']}", key=f"rechazar_{row['id']}"):
+        if st.button(f"Rechazar {row['id']}", key=f"rechazar_{row['id']}_{index}"):
             actualizar_estado_cita(row['id'], "rechazada")

@@ -1,4 +1,3 @@
-id,nombre_mascota,nombre_dueno,tratamiento,fecha_inicio,estado,tratamientos_realizados,forma_pago,pagada
-1,ramon,Matias,Análisis: sangre y hormonales,2024-12-11 14:55:00,aceptada,[],,False
-2,rudo,javier,Ecografías,2024-12-23 15:30:00,rechazada,[],,False
-3,jimmy,andres guerra,Broncológica,2024-12-25 15:30:00,pendiente,[],,False
+id,nombre_mascota,nombre_dueno,tratamiento,fecha_inicio,estado
+1,ramon,Matias,Cirugía de Hernias,2024-12-17 14:57:00,rechazada
+

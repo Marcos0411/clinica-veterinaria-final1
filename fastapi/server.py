@@ -41,9 +41,6 @@ class Cita(BaseModel):
     tratamiento: str
     fecha_inicio: datetime
     estado: str
-    tratamientos_realizados: Optional[List[str]] = []
-    forma_pago: Optional[str] = None
-    pagada: Optional[bool] = False
 
 class Contrato(BaseModel):
     fecha: str
@@ -164,10 +161,10 @@ async def buscar_dueno(dni_dueno: str):
         if not os.path.exists(registroDuenos_csv):
             raise HTTPException(status_code=404, detail="Archivo de registros de dueños no encontrado.")
         registro_df = pd.read_csv(registroDuenos_csv)
-        dueño = registro_df[registro_df['dni_dueno'].str.strip() == dni_dueno.strip()]
-        if dueño.empty:
+        dueno = registro_df[registro_df['dni_dueno'].str.strip() == dni_dueno.strip()]
+        if dueno.empty:
             raise HTTPException(status_code=404, detail="Dueño no encontrado.")
-        return dueño.to_dict(orient='records')[0]
+        return dueno.to_dict(orient='records')[0]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado al buscar dueño: {str(e)}")
 
@@ -261,49 +258,66 @@ def eliminar_mascota(nombre: str):
 citas_db = []
 next_id = 1
 
+# Initialize citas_db and next_id from the CSV file
+if os.path.exists(registroCitas_csv):
+    registro_df = pd.read_csv(registroCitas_csv)
+    citas_db = registro_df.to_dict(orient="records")
+    if not registro_df.empty:
+        next_id = registro_df['id'].max() + 1
+
 @app.post("/citas/", response_model=Cita)
 def crear_cita(cita: Cita):
     global next_id
     cita.id = next_id
     next_id += 1
     citas_db.append(cita)
-    # Save to CSV
-    citas_df = pd.DataFrame([c.dict() for c in citas_db])
-    citas_df.to_csv(registroCitas_csv, index=False)
+    # Append to CSV
+    nuevo_registro = pd.DataFrame([cita.dict()])
+    if os.path.exists(registroCitas_csv):
+        nuevo_registro.to_csv(registroCitas_csv, mode='a', header=False, index=False)
+    else:
+        nuevo_registro.to_csv(registroCitas_csv, index=False)
     return cita
 
 @app.put("/citas/{cita_id}", response_model=Cita)
 def modificar_cita(cita_id: int, cita_actualizada: dict):
-    for index, cita in enumerate(citas_db):
-        if cita.id == cita_id:
-            for key, value in cita_actualizada.items():
-                setattr(citas_db[index], key, value)
-            # Save to CSV
-            citas_df = pd.DataFrame([c.dict() for c in citas_db])
-            citas_df.to_csv(registroCitas_csv, index=False)
-            return citas_db[index]
-    raise HTTPException(status_code=404, detail="Cita no encontrada")
+    try:
+        if os.path.exists(registroCitas_csv):
+            registro_df = pd.read_csv(registroCitas_csv)
+            if cita_id in registro_df['id'].values:
+                for key, value in cita_actualizada.items():
+                    registro_df.loc[registro_df['id'] == cita_id, key] = value
+                registro_df.to_csv(registroCitas_csv, index=False)
+                return registro_df[registro_df['id'] == cita_id].to_dict(orient='records')[0]
+            else:
+                raise HTTPException(status_code=404, detail="Cita no encontrada")
+        else:
+            raise HTTPException(status_code=404, detail="No hay citas registradas")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al modificar la cita: {e}")
 
 @app.delete("/citas/{cita_id}")
 def eliminar_cita(cita_id: int):
-    for index, cita in enumerate(citas_db):
-        if cita.id == cita_id:
-            del citas_db[index]
-            return {"detail": "Cita eliminada exitosamente"}
-    raise HTTPException(status_code=404, detail="Cita no encontrada")
+    try:
+        if os.path.exists(registroCitas_csv):
+            registro_df = pd.read_csv(registroCitas_csv)
+            if cita_id in registro_df['id'].values:
+                registro_df = registro_df[registro_df['id'] != cita_id]
+                registro_df.to_csv(registroCitas_csv, index=False)
+                return {"detail": "Cita eliminada exitosamente"}
+            else:
+                raise HTTPException(status_code=404, detail="Cita no encontrada")
+        else:
+            raise HTTPException(status_code=404, detail="No hay citas registradas")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al eliminar la cita: {e}")
 
 @app.get("/citas/")
 def obtener_citas():
     try:
         if os.path.exists(registroCitas_csv):
             registro_df = pd.read_csv(registroCitas_csv)
-            registro_df['tratamientos_realizados'] = registro_df['tratamientos_realizados'].apply(eval)
-            registro_df['pagada'] = registro_df['pagada'].astype(bool)
             citas = registro_df.to_dict(orient="records")
-            for cita in citas:
-                for key, value in cita.items():
-                    if isinstance(value, float) and (value == float('inf') or value == float('-inf') or value != value):
-                        cita[key] = str(value)
             return citas
         else:
             raise HTTPException(status_code=404, detail="No hay citas registradas")
