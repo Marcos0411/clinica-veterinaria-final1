@@ -7,7 +7,7 @@ COPY requirements.txt /fastapi
 WORKDIR /fastapi
 
 RUN pip install -r requirements.txt
-
+RUN pip  install pydantic[email]
 COPY . /fastapi
 
 EXPOSE 8000

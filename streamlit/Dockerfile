@@ -12,4 +12,4 @@ COPY . /streamlit
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "Analisis_de_transacciones.py"]
+CMD ["streamlit", "run", "Pagina_de_inicio.py"]
