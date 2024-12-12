@@ -1,8 +1,1 @@
 id,cliente,mascota,tratamientos,productos,total,estado_pago
-1,Matias,ramon,"[""Cirugía de Hernias""]",[],150.0,pagada
-2,Alex lopez,animalito,"[""Cutánea"", ""Ecografías"", ""Limpieza bucal""]",[],445.0,pagada
-3,Pablo huidobro,gabri,"[""Broncológica"", ""Cirugía Articular y ósea"", ""Cirugía de Hernias""]",[],710.0,pagada
-4,Juan Carlos Ramirez,pol,"[""Cirugía Articular y ósea"", ""Broncológica"", ""Cirugía de Hernias""]",[],455.0,pagada
-5,pedro juarez,Rami,"[""Castración"", ""Broncológica""]",[],155.0,pagada
-6,jorge macias,pochi,"[""Cirugía Cardíaca"", ""Broncológica"", ""Cirugía Abdominal""]","[""bayer""]",563.0,pagada
-7,matias gonzalez,kai,"[""Revisión general"", ""Desparasitación""]","[""moiuh"", ""clean""]",85.0,pagada
