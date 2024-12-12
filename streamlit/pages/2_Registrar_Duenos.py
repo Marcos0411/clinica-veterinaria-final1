@@ -6,14 +6,14 @@ import os
 st.title("Registro de Dueños")
 
 def buscar_dueno(endpoint, valor):
-    response = requests.get(f"http://localhost:8000/{endpoint}/{valor}")
+    response = requests.get(f"http://fastapi:8000/{endpoint}/{valor}")
     if response.status_code == 200:
         return response.json()
     else:
         return None
 
 def eliminar_dueno(endpoint, valor):
-    response = requests.delete(f"http://localhost:8000/{endpoint}/{valor}")
+    response = requests.delete(f"http://fastapi:8000/{endpoint}/{valor}")
     return response.status_code
 
 tabs = st.tabs(["Registrar Dueño", "Buscar Dueños", "Eliminar Dueños"])
@@ -36,7 +36,7 @@ with tabs[0]:
             "dni_dueno": dni_dueno_nuevo,
             "direccion_dueno": direccion_dueno
         }
-        response = requests.post("http://localhost:8000/alta_duenos/", json=nuevo_dueno)
+        response = requests.post("http://fastapi:8000/alta_duenos/", json=nuevo_dueno)
         if response.status_code == 200:
             st.success("Dueño registrado correctamente")
         else:
@@ -91,7 +91,7 @@ with tabs[2]:
 
 # Mostrar el archivo CSV de dueños registrados
 st.header("Dueños Registrados")
-csv_path = '/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroDuenos.csv'
+csv_path = 'registroDuenos.csv'
 st.write(f"Verificando la existencia del archivo: {csv_path}")
 if os.path.exists(csv_path):
     df = pd.read_csv(csv_path)

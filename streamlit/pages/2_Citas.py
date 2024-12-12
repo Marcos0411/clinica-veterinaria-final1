@@ -4,7 +4,7 @@ import pandas as pd
 
 
 # URL base de la API de FastAPI
-API_URL = "http://localhost:8000"
+API_URL = "http://fastapi:8000"
 
 # Función para registrar una nueva cita
 def registrar_cita(mascota, dueno, tratamiento, fecha, hora):

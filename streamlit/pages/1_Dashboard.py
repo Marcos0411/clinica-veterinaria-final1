@@ -1,15 +1,33 @@
 import streamlit as st
 import pandas as pd
+import os
 
 # Título del Dashboard
 st.title("Dashboard de la Clínica Veterinaria")
 
 # Cargar datos desde CSV
-productos_df = pd.read_csv('/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroProductos.csv')
-mascotas_df = pd.read_csv('/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroMascotas.csv')
-duenos_df = pd.read_csv('/home/marcoscabeza/clinica-veterinaria-final1/fastapi/registroDuenos.csv')
-facturas_df = pd.read_csv('/home/marcoscabeza/clinica-veterinaria-final1/fastapi/facturas.csv')
-citas_df = pd.read_csv('/home/marcoscabeza/clinica-veterinaria-final1/fastapi/citas.csv')
+csv_paths = {
+    'productos': '/streamlit/registroProductos.csv',
+    'mascotas': '/streamlit/registroMascotas.csv',
+    'duenos': '/streamlit/registroDuenos.csv',
+    'facturas': '/streamlit/facturas.csv',
+    'citas': '/streamlit/citas.csv'
+}
+
+dataframes = {}
+for key, path in csv_paths.items():
+    st.write(f"Verificando la existencia del archivo: {path}")
+    if os.path.exists(path):
+        dataframes[key] = pd.read_csv(path)
+    else:
+        st.error(f"El archivo {path} no se encontró.")
+        dataframes[key] = pd.DataFrame()  # Crear un DataFrame vacío para evitar errores posteriores
+
+productos_df = dataframes['productos']
+mascotas_df = dataframes['mascotas']
+duenos_df = dataframes['duenos']
+facturas_df = dataframes['facturas']
+citas_df = dataframes['citas']
 
 # Calcular estadísticas
 data = {
@@ -23,23 +41,5 @@ data = {
     ]
 }
 
-df = pd.DataFrame(data)
-
-# Mostrar datos en una tabla
-st.subheader("Estadísticas de Servicios")
-st.table(df)
-
-# Gráfica de barras
-st.subheader("Distribución de Servicios")
-st.bar_chart(df.set_index('Categoría'))
-
-# Métricas clave
-st.subheader("Métricas Clave")
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("Productos", str(productos_df.shape[0]))
-col2.metric("Mascotas", str(mascotas_df.shape[0]))
-col3.metric("Dueños", str(duenos_df.shape[0]))
-col4.metric("Facturas", str(facturas_df.shape[0]))
-col5.metric("Citas", str(citas_df.shape[0]))
-
-# ...existing code...
+# Mostrar estadísticas
+st.write(pd.DataFrame(data))

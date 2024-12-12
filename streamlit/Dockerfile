@@ -8,6 +8,8 @@ WORKDIR /streamlit
 
 RUN pip install -r requirements.txt
 
+COPY ../fastapi/registroDuenos.csv /streamlit/registroDuenos.csv
+
 COPY . /streamlit
 
 EXPOSE 8501

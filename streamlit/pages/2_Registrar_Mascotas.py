@@ -5,7 +5,7 @@ import pandas as pd
 st.title("Registrar Mascotas")
 
 def registrar_mascota(nombre, especie, raza, edad, propietario):
-    url = 'http://localhost:8000/mascotas/'  # Updated URL
+    url = 'http://fastapi:8000/mascotas/'  # Updated URL
     data = {
         'nombre': nombre,
         'especie': especie,
@@ -17,7 +17,7 @@ def registrar_mascota(nombre, especie, raza, edad, propietario):
     return response.status_code
 
 def obtener_mascotas():
-    url = 'http://localhost:8000/mascotas/'  # Updated URL
+    url = 'http://fastapi:8000/mascotas/'  # Updated URL
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -26,12 +26,12 @@ def obtener_mascotas():
         return []
 
 def eliminar_mascota(nombre):
-    url = f'http://localhost:8000/mascotas/{nombre}'
+    url = f'http://fastapi:8000/mascotas/{nombre}'
     response = requests.delete(url)
     return response.status_code
 
 def obtener_duenos():
-    url = 'http://localhost:8000/duenos/'
+    url = 'http://fastapi:8000/duenos/'
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()

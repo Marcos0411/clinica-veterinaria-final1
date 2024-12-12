@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # URL base de la API de FastAPI
-API_URL = "http://localhost:8000"
+API_URL = "http://fastapi:8000"
 
 # Función para obtener la lista de tratamientos
 def obtener_tratamientos():

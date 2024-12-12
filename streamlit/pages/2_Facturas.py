@@ -6,7 +6,7 @@ st.title("Gestión de Facturas")
 
 # Función para obtener facturas
 def obtener_facturas():
-    response = requests.get('http://localhost:8000/facturas/')
+    response = requests.get('http://fastapi:8000/facturas/')
     if response.status_code == 200:
         return response.json()
     else:
@@ -15,7 +15,7 @@ def obtener_facturas():
 
 # Función para obtener tratamientos
 def obtener_tratamientos():
-    response = requests.get('http://localhost:8000/tratamientos/')
+    response = requests.get('http://fastapi:8000/tratamientos/')
     if response.status_code == 200:
         return response.json()
     else:
@@ -24,7 +24,7 @@ def obtener_tratamientos():
 
 # Función para obtener productos
 def obtener_productos():
-    response = requests.get('http://localhost:8000/productos/')
+    response = requests.get('http://fastapi:8000/productos/')
     if response.status_code == 200:
         return response.json()
     else:
@@ -33,7 +33,7 @@ def obtener_productos():
 
 # Función para actualizar el estado de pago de una factura
 def actualizar_estado_factura(factura_id, estado_pago):
-    response = requests.put(f"http://localhost:8000/facturas/{factura_id}", json={"estado_pago": estado_pago})
+    response = requests.put(f"http://fastapi:8000/facturas/{factura_id}", json={"estado_pago": estado_pago})
     if response.status_code == 200:
         st.success("Estado de pago actualizado correctamente")
     else:
@@ -41,7 +41,7 @@ def actualizar_estado_factura(factura_id, estado_pago):
 
 # Función para actualizar la factura con tratamientos y productos extras
 def actualizar_factura_con_tratamientos(factura_id, tratamientos_extras, productos_extras, nuevo_total):
-    response = requests.put(f"http://localhost:8000/facturas/{factura_id}/tratamientos", json={"tratamientos": tratamientos_extras, "productos": productos_extras, "total": nuevo_total})
+    response = requests.put(f"http://fastapi:8000/facturas/{factura_id}/tratamientos", json={"tratamientos": tratamientos_extras, "productos": productos_extras, "total": nuevo_total})
     if response.status_code == 200:
         st.success("Factura actualizada correctamente")
     else:
